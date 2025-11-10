@@ -5,13 +5,19 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint-and-test:
-    name: Lint, Test & Build
+  # Job 1: Install dependencies and setup workspace
+  setup:
+    name: Setup Dependencies
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -28,23 +34,267 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=deps-${{ hashFiles('**/pnpm-lock.yaml', 'package.json', '**/package.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            deps-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint code
+      - name: Cache Turbo build outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+  # Job 2: Code linting
+  lint:
+    name: Code Linting
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            deps-
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Run ESLint
         run: pnpm lint
 
-      - name: Run tests
+  # Job 3: Unit testing
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            deps-
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Run Unit Tests
         run: pnpm test
 
-      - name: Build packages
+  # Job 4: Build packages
+  build:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: [setup, lint, test]
+    permissions:
+      contents: read
+    outputs:
+      build-success: ${{ steps.build-status.outputs.success }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            deps-
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Build all packages
         run: pnpm build
 
-      - name: Validate package integrity
+      - name: Validate LCARS packages build
+        id: build-status
         run: |
-          # Verify all LCARS packages built successfully
-          ls -la packages/lcars/dist/
-          ls -la packages/lcars-react/dist/
-          ls -la packages/lcars-vue/dist/
+          echo "Validating LCARS package builds..."
+          success=true
+
+          for pkg in lcars lcars-react lcars-vue; do
+            if [ ! -d "packages/$pkg/dist" ]; then
+              echo "❌ Package $pkg build failed - no dist directory"
+              success=false
+            else
+              echo "✅ Package $pkg built successfully"
+              ls -la "packages/$pkg/dist/" | head -5
+            fi
+          done
+
+          if [ "$success" = "true" ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "🎉 All LCARS packages built successfully!"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "💥 Some packages failed to build"
+            exit 1
+          fi
+
+      - name: Cache build artifacts
+        if: steps.build-status.outputs.success == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            packages/*/loader
+          key: build-${{ github.sha }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json') }}
+
+  # Job 5: Quality validation
+  validate:
+    name: Quality Validation
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: needs.build.outputs.build-success == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            packages/*/loader
+          key: build-${{ github.sha }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json') }}
+
+      - name: Validate package exports
+        run: |
+          echo "Validating package exports and types..."
+          for pkg in lcars lcars-react lcars-vue; do
+            echo "🔍 Checking @starfleet-technology/$pkg..."
+
+            # Check main entry points exist
+            pkg_json="packages/$pkg/package.json"
+            main=$(node -p "require('./$pkg_json').main || ''")
+            types=$(node -p "require('./$pkg_json').types || ''")
+
+            if [ -n "$main" ] && [ ! -f "packages/$pkg/$main" ]; then
+              echo "❌ Main entry point missing: $main"
+              exit 1
+            fi
+
+            if [ -n "$types" ] && [ ! -f "packages/$pkg/$types" ]; then
+              echo "❌ Types entry point missing: $types"
+              exit 1
+            fi
+
+            echo "✅ Package $pkg exports are valid"
+          done
+
+      - name: Check bundle sizes
+        run: |
+          echo "📊 Bundle size analysis..."
+          for pkg in lcars lcars-react lcars-vue; do
+            if [ -d "packages/$pkg/dist" ]; then
+              echo "📦 @starfleet-technology/$pkg:"
+              du -sh packages/$pkg/dist/* 2>/dev/null || echo "  No dist files found"
+            fi
+          done

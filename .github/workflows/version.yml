@@ -1,24 +1,187 @@
-name: Version Management
+name: Version Management & Publishing
 on:
   push:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: version-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  version:
-    name: Version & Publish
+  # Job 1: Setup and validation
+  setup:
+    name: Setup & Validation
     runs-on: ubuntu-latest
     if: github.repository_owner == 'starfleet-technology'
+    permissions:
+      contents: read
     outputs:
-      published: ${{ steps.changesets.outputs.published }}
-      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      has-changesets: ${{ steps.changeset-check.outputs.has-changesets }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=deps-${{ hashFiles('**/pnpm-lock.yaml', 'package.json', '**/package.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            deps-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changesets
+        id: changeset-check
+        run: |
+          if [ -n "$(ls .changeset/*.md 2>/dev/null | grep -v README)" ]; then
+            echo "has-changesets=true" >> $GITHUB_OUTPUT
+            echo "📦 Changesets found - will proceed with versioning"
+          else
+            echo "has-changesets=false" >> $GITHUB_OUTPUT
+            echo "📝 No changesets found - no action needed"
+          fi
+
+  # Job 2: Build and validate packages
+  build:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.has-changesets == 'true'
+    permissions:
+      contents: read
+    outputs:
+      build-success: ${{ steps.validation.outputs.success }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            deps-
+
+      - name: Cache Turbo build outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-version-${{ github.sha }}
+          restore-keys: |
+            turbo-version-
+            turbo-
+
+      - name: Run quality checks
+        run: |
+          echo "🔍 Running pre-publish quality checks..."
+          pnpm lint
+          pnpm test
+
+      - name: Build packages
+        run: |
+          echo "🏗️ Building all packages..."
+          pnpm build
+
+      - name: Validate build outputs
+        id: validation
+        run: |
+          echo "✅ Validating package builds for publishing..."
+          success=true
+
+          for pkg in lcars lcars-react lcars-vue; do
+            pkg_path="packages/$pkg"
+
+            # Check dist directory exists
+            if [ ! -d "$pkg_path/dist" ]; then
+              echo "❌ $pkg: No dist directory found"
+              success=false
+              continue
+            fi
+
+            # Check package.json has required fields
+            if ! node -e "
+              const pkg = require('./$pkg_path/package.json');
+              if (!pkg.main && !pkg.module && !pkg.exports) {
+                console.log('❌ $pkg: No main entry point defined');
+                process.exit(1);
+              }
+              if (!pkg.version) {
+                console.log('❌ $pkg: No version defined');
+                process.exit(1);
+              }
+              console.log('✅ $pkg: Package structure valid');
+            "; then
+              success=false
+            fi
+          done
+
+          if [ "$success" = "true" ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "🎉 All packages ready for publishing!"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Cache build artifacts
+        if: steps.validation.outputs.success == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            packages/*/loader
+          key: build-artifacts-${{ github.sha }}
+
+  # Job 3: Version and publish
+  publish:
+    name: Version & Publish
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: needs.setup.outputs.has-changesets == 'true' && needs.build.outputs.build-success == 'true'
     permissions:
       contents: write
       pull-requests: write
       id-token: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -38,11 +201,21 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Restore dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            **/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
 
-      - name: Build packages
-        run: pnpm build
+      - name: Restore build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            packages/*/loader
+          key: build-artifacts-${{ github.sha }}
 
       - name: Create Version PR or Publish
         id: changesets
@@ -56,21 +229,72 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Job 4: Create GitHub releases (only after successful publishing)
+  release:
+    name: Create GitHub Releases
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: needs.publish.outputs.published == 'true'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
       - name: Create GitHub Releases
-        if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "Creating GitHub releases for published packages..."
-          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | .name + "@" + .version' | while read package; do
-            echo "Published: $package"
-            # Extract package name and version for release creation
-            pkg_name=$(echo $package | cut -d'@' -f1)
-            pkg_version=$(echo $package | cut -d'@' -f2-)
+          echo "🚀 Creating GitHub releases for published packages..."
+          echo '${{ needs.publish.outputs.publishedPackages }}' > published-packages.json
+
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+          cat published-packages.json | jq -r '.[] | .name + "@" + .version' | while read package; do
+            echo "📦 Processing: $package"
+
+            # Extract package name and version
+            pkg_name=$(echo $package | cut -d'@' -f2)  # Remove leading @starfleet-technology/
+            pkg_version=$(echo $package | cut -d'@' -f3)
 
             # Create GitHub release
-            gh release create "${pkg_name}@${pkg_version}" \
+            if gh release create "${pkg_name}@${pkg_version}" \
               --title "${pkg_name} v${pkg_version}" \
-              --notes "See [CHANGELOG.md](./packages/${pkg_name#@starfleet-technology/}/CHANGELOG.md) for details." \
-              --latest
+              --notes "See [CHANGELOG.md](./packages/${pkg_name}/CHANGELOG.md) for details." \
+              --latest=false; then
+              echo "✅ Created release for ${pkg_name}@${pkg_version}"
+            else
+              echo "⚠️ Failed to create release for ${pkg_name}@${pkg_version} (may already exist)"
+            fi
           done
+
+          echo "🎉 GitHub release creation completed!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 5: Notification and cleanup
+  notify:
+    name: Post-publish Notification
+    runs-on: ubuntu-latest
+    needs: [publish, release]
+    if: always() && needs.publish.outputs.published == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Publish Success Notification
+        run: |
+          echo "## 🚀 Packages Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following packages have been published to npm:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo '${{ needs.publish.outputs.publishedPackages }}' | jq -r '.[] | "- `" + .name + "@" + .version + "`"' >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Installation:**" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo 'npm install @starfleet-technology/lcars@latest' >> $GITHUB_STEP_SUMMARY
+          echo 'npm install @starfleet-technology/lcars-react@latest' >> $GITHUB_STEP_SUMMARY
+          echo 'npm install @starfleet-technology/lcars-vue@latest' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
