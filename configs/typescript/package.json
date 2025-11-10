@@ -1,0 +1,34 @@
+{
+  "name": "@starfleet-technology/config-typescript",
+  "version": "0.0.0",
+  "description": "Shared TypeScript configuration for Starfleet Technology LCARS project - consistent TypeScript settings across all packages",
+  "keywords": [
+    "typescript",
+    "config",
+    "tsconfig",
+    "starfleet-technology",
+    "lcars",
+    "shared-config"
+  ],
+  "author": "Starfleet Technology <engineering@starfleet.technology> (https://docs.starfleet.technology)",
+  "license": "MIT",
+  "homepage": "https://docs.starfleet.technology",
+  "bugs": {
+    "url": "https://github.com/starfleet-technology/lcars-webcomponents/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starfleet-technology/lcars-webcomponents.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "packageManager": "pnpm@10.18.3"
+}
