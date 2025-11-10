@@ -1,0 +1,49 @@
+{
+  "name": "@starfleet-technology/lcars-vue",
+  "version": "0.0.3",
+  "description": "Vue bindings for Star Trek LCARS UI components - seamless integration of LCARS design system with Vue.js applications",
+  "keywords": [
+    "lcars",
+    "star-trek",
+    "vue",
+    "vue-components",
+    "web-components",
+    "stencil",
+    "starfleet-technology",
+    "ui-components"
+  ],
+  "author": "Starfleet Technology <engineering@starfleet.technology> (https://docs.starfleet.technology)",
+  "license": "MIT",
+  "homepage": "https://docs.starfleet.technology",
+  "bugs": {
+    "url": "https://github.com/starfleet-technology/lcars-webcomponents/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p . --outDir ./dist"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "pnpm@10.18.3",
+  "dependencies": {
+    "@starfleet-technology/lcars": "workspace:*",
+    "@stencil/vue-output-target": "^0.11.8"
+  },
+  "devDependencies": {
+    "vue": "^3.5.24",
+    "@types/node": "^22.19.0",
+    "typescript": "^5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starfleet-technology/lcars-webcomponents.git"
+  }
+}

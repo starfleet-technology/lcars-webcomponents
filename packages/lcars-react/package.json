@@ -1,0 +1,54 @@
+{
+  "name": "@starfleet-technology/lcars-react",
+  "version": "0.0.3",
+  "description": "React bindings for Star Trek LCARS UI components - seamless integration of LCARS design system with React applications",
+  "keywords": [
+    "lcars",
+    "star-trek",
+    "react",
+    "react-components",
+    "web-components",
+    "stencil",
+    "starfleet-technology",
+    "ui-components"
+  ],
+  "author": "Starfleet Technology <engineering@starfleet.technology> (https://docs.starfleet.technology)",
+  "license": "MIT",
+  "homepage": "https://docs.starfleet.technology",
+  "bugs": {
+    "url": "https://github.com/starfleet-technology/lcars-webcomponents/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starfleet-technology/lcars-webcomponents.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "scripts": {
+    "build": "npm run tsc",
+    "tsc": "tsc -p . --outDir ./dist",
+    "dev": "tsc -p . --outDir ./dist --watch"
+  },
+  "files": [
+    "dist"
+  ],
+  "packageManager": "pnpm@10.18.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@starfleet-technology/lcars": "workspace:*",
+    "@stencil/react-output-target": "^1.2.0"
+  }
+}
