@@ -1,0 +1,21 @@
+{
+  "name": "@starfleet-technology/lcars-webcomponents",
+  "version": "0.0.1",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "build": "turbo run build",
+    "publish:packages": "turbo run build --filter=@starfleet-technology/lcars* && pnpm publish --access public"
+  },
+  "keywords": [],
+  "author": "Starfleet Technology (https://docs.starfleet.technology)",
+  "license": "ISC",
+  "packageManager": "pnpm@10.18.3",
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "turbo": "^2.6.0"
+  }
+}

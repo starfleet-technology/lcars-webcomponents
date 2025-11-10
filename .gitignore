@@ -1,0 +1,44 @@
+# Node stuff
+node_modules/
+
+# Turbo cache
+.turbo/
+
+# Build output
+dist/
+build/
+
+# Stencil
+dist/
+www/
+loader/
+
+*~
+*.sw[mnpcod]
+*.log
+*.lock
+*.tmp
+*.tmp.*
+log.txt
+*.sublime-project
+*.sublime-workspace
+
+.stencil/
+.idea/
+.vscode/
+.sass-cache/
+.versions/
+node_modules/
+$RECYCLE.BIN/
+
+# Drafts and notes
+.drafts/
+.tasks/
+.idea/
+
+# Github
+.github/chatmodes
+.github/instructions
+CONTENT_GUIDELINES.md
+CROSS_REFERENCE_SYSTEM.md
+TEMPLATE.md
