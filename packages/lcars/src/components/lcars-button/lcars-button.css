@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  --button-width: 120px;
+  --button-height: 58px;
+  --button-spacing: calc(var(--lcars-block-gap) / 2);
+  --lcars-color-black: #090909;
+  --lcars-color-a1: #ec943a;
+  --lcars-color-a2: #eb9870;
+  --lcars-color-a3: #c47d69;
+  --lcars-color-a4: #d29a7f;
+  --lcars-color-a5: #faa41b;
+  --lcars-color-a6: #c082a9;
+  --lcars-color-a7: #9c698a;
+  --lcars-color-a8: #b6a5d1;
+  --lcars-color-a9: #8b72aa;
+
+
+  appearance: none;
+  width: var(--button-width);
+  height: var(--button-height);
+  border-radius: calc(var(--button-height) / 2);
+  border-width: 0;
+
+  display: flex;
+  justify-content: right;
+  align-items: flex-end;
+  padding: 0.10em 20px;
+  margin: var(--button-spacing);
+
+  background-color: var(--lcars-color-a9);
+  color: var(--lcars-color-black);
+
+  font-family: 'lcars', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+}
