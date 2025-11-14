@@ -8,7 +8,7 @@
 # - 🛡️ Manual approval gates for production releases
 # - 📦 Multi-package publishing with proper dependency management
 # - 🏷️ Automated GitHub release creation
-# - 🤖 Changeset bot handles PR commenting automatically
+# - 🤖 Direct publishing after merge (no intermediate PRs)
 #
 # Security Features:
 # - Repository ownership validation
@@ -18,15 +18,11 @@
 name: Release
 
 on:
-  # Run on main branch for publishing
+  # Run on main branch for version updates
   push:
     branches: [main]
 
-  # Run on pull requests for changeset validation
-  pull_request:
-    branches: [main]
-
-  # Manual trigger for human-controlled publishing
+  # Manual trigger for publishing after approval
   workflow_dispatch:
     inputs:
       force_publish:
@@ -42,7 +38,7 @@ jobs:
   # Release Pipeline
   # ============================================================================
   # Purpose: Handle changeset analysis, version bumping, and publishing
-  # Uses changesets/action for automated version management and publishing
+  # Uses manual approval process for safe publishing
   release:
     name: 🚀 Release
     runs-on: ubuntu-latest
@@ -53,7 +49,6 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
 
     steps:
@@ -116,29 +111,97 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # ----------------------------------------
+      # Changeset Detection
+      # ----------------------------------------
+      - name: 📋 Check for Changesets
+        id: changeset_check
+        run: |
+          if ls .changeset/*.md 1> /dev/null 2>&1; then
+            CHANGESET_COUNT=$(ls .changeset/*.md 2>/dev/null | grep -v README | wc -l)
+            echo "📦 Found $CHANGESET_COUNT changeset(s)"
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
 
+            # Show changeset status
+            echo "🔍 Changeset status:"
+            pnpm changeset status
+          else
+            echo "📝 No changesets found"
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+          fi
 
       # ----------------------------------------
-      # Version & Publish (only on main branch or manual trigger)
+      # Version Packages (if changesets exist)
       # ----------------------------------------
-      - name: 🚀 Create Release Pull Request or Publish to npm
-        id: changesets
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_publish == 'true')
-        uses: changesets/action@v1
-        with:
-          # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          publish: pnpm release
-          commit: 'chore: version packages [skip ci]'
-          title: '🚀 Version Packages'
+      - name: 📊 Apply Version Updates
+        id: version_update
+        if: steps.changeset_check.outputs.has_changesets == 'true' && github.event_name == 'push'
+        run: |
+          echo "🔄 Applying version updates from changesets..."
+
+          # Apply version changes
+          pnpm changeset version
+
+          # Check if any files were modified
+          if git diff --quiet; then
+            echo "📝 No version changes applied"
+            echo "version_updated=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Package versions updated"
+            echo "version_updated=true" >> $GITHUB_OUTPUT
+
+            # Commit version changes
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add .
+            git commit -m "chore: version packages [skip ci]"
+            git push
+          fi
+
+      # ----------------------------------------
+      # Manual Publishing Gate
+      # ----------------------------------------
+      - name: 🛡️ Manual Publishing Gate
+        if: steps.version_update.outputs.version_updated == 'true' && github.event_name == 'push'
+        run: |
+          echo "🚨 PUBLISHING APPROVAL REQUIRED"
+          echo "================================"
+          echo ""
+          echo "📦 Packages are ready to be published to NPM"
+          echo "🏷️ Repository: ${{ github.repository }}"
+          echo "🌟 Branch: ${{ github.ref_name }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo ""
+          echo "⚠️  This action will publish packages to the PUBLIC NPM registry"
+          echo "⚠️  This action CANNOT be undone once published"
+          echo ""
+          echo "🔗 To continue with publishing, manually re-run this workflow"
+          echo "   with 'force_publish' set to true, or use:"
+          echo ""
+          echo "   gh workflow run version-clean.yml --field force_publish=true"
+          echo ""
+          echo "❌ Stopping workflow - manual approval required"
+          echo "✅ Versions have been updated and committed"
+          echo "🔄 Re-run with force_publish=true to complete publishing"
+          exit 1
+
+      # ----------------------------------------
+      # NPM Publishing (only with manual approval)
+      # ----------------------------------------
+      - name: 🚀 Publish to NPM
+        if: github.event.inputs.force_publish == 'true'
+        run: |
+          echo "🚀 Publishing packages to NPM registry..."
+          echo "🔍 Publishing with changeset publish:"
+          pnpm changeset publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # ----------------------------------------
       # Success Notification
       # ----------------------------------------
       - name: 📢 Publish Notification
-        if: steps.changesets.outputs.published == 'true'
+        if: github.event.inputs.force_publish == 'true'
         run: |
           echo "## 🎉 Packages Published Successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
