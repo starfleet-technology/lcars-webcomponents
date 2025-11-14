@@ -232,7 +232,7 @@ jobs:
   validate:
     name: Quality Validation
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [setup, build]
     if: needs.build.outputs.build-success == 'true'
     permissions:
       contents: read
