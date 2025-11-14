@@ -225,6 +225,8 @@ jobs:
             packages/*/dist
             packages/*/loader
           key: build-${{ github.sha }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json') }}
+          restore-keys: |
+            build-
 
   # Job 5: Quality validation
   validate:
@@ -256,6 +258,8 @@ jobs:
             node_modules
             **/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
+          restore-keys: |
+            deps-
 
       - name: Restore build artifacts
         uses: actions/cache@v4
@@ -264,6 +268,8 @@ jobs:
             packages/*/dist
             packages/*/loader
           key: build-${{ github.sha }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json') }}
+          restore-keys: |
+            build-
 
       - name: Validate package exports
         run: |
