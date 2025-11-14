@@ -1,0 +1,147 @@
+{
+  "compilerOptions": {
+    // === Language and Environment ===
+    // Target ES2022 for modern JavaScript features (optional chaining, nullish coalescing, top-level await)
+    "target": "ES2022",
+
+    // Include modern library features for DOM, ES2022, and disposables pattern
+    "lib": ["DOM", "DOM.Iterable", "ES2022", "ESNext.Disposable"],
+
+    // Enable experimental decorators for Stencil components (@Component, @Prop, @State, etc.)
+    "experimentalDecorators": true,
+
+    // Enable emit decorator metadata for runtime reflection (used by Stencil)
+    "emitDecoratorMetadata": true,
+
+    // Use React JSX transform for Stencil's h() function
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "h.Fragment",
+
+    // === Module System ===
+    // Use bundler module resolution for optimal monorepo and modern tooling compatibility
+    "moduleResolution": "bundler",
+
+    // Use ESNext modules for tree-shaking and modern bundlers
+    "module": "ESNext",
+
+    // Allow synthetic default imports (import React from 'react' instead of import * as React)
+    "allowSyntheticDefaultImports": true,
+
+    // Enable ECMAScript module interoperability for better CommonJS integration
+    "esModuleInterop": true,
+
+    // Resolve JSON modules (import data from './config.json')
+    "resolveJsonModule": true,
+
+    // Preserve symbolic links for proper monorepo workspace resolution
+    "preserveSymlinks": false,
+
+    // === Type Checking - Strict Mode ===
+    // Enable all strict type checking options for maximum type safety
+    "strict": true,
+
+    // Included in strict but explicitly listed for clarity:
+    // Strict null checks prevent undefined/null errors at runtime
+    "strictNullChecks": true,
+
+    // Strict function types for better callback and method type safety
+    "strictFunctionTypes": true,
+
+    // Strict bind/call/apply ensures proper 'this' typing
+    "strictBindCallApply": true,
+
+    // Strict property initialization ensures class properties are initialized
+    "strictPropertyInitialization": true,
+
+    // No implicit any prevents accidental untyped variables
+    "noImplicitAny": true,
+
+    // No implicit returns prevents functions from returning undefined unexpectedly
+    "noImplicitReturns": true,
+
+    // No implicit this prevents 'this' from being any type
+    "noImplicitThis": true,
+
+    // Always strict mode in generated JavaScript
+    "alwaysStrict": true,
+
+    // === Additional Type Safety ===
+    // Prevent unreachable code for cleaner, safer code paths
+    "allowUnreachableCode": false,
+
+    // Prevent unused labels to avoid confusion
+    "allowUnusedLabels": false,
+
+    // Catch unused local variables (helps find dead code and typos)
+    "noUnusedLocals": true,
+
+    // Catch unused function parameters (helps maintain clean interfaces)
+    "noUnusedParameters": true,
+
+    // Ensure switch statements handle all cases
+    "noFallthroughCasesInSwitch": true,
+
+    // Require explicit return types on functions that return values
+    "noImplicitOverride": true,
+
+    // Check that indexed access is used safely
+    "noUncheckedIndexedAccess": false,
+
+    // Prevent property access on possibly null/undefined values
+    "exactOptionalPropertyTypes": false,
+
+    // === Emit ===
+    // No emit for this base config - packages will handle their own build output
+    "noEmit": true,
+
+    // Skip lib checking for faster compilation (trust library definitions)
+    "skipLibCheck": true,
+
+    // Force consistent casing in file names across platforms
+    "forceConsistentCasingInFileNames": true,
+
+    // === Interop and Compatibility ===
+    // Isolate modules for better compatibility with bundlers
+    "isolatedModules": true,
+
+    // Verbose error messages for better debugging
+    "pretty": true,
+
+    // Remove comments from output (when emitting)
+    "removeComments": false,
+
+    // Preserve const enums for better tree-shaking
+    "preserveConstEnums": true,
+
+    // === Source Maps and Debugging ===
+    // Generate source maps for debugging (when emitting)
+    "sourceMap": true,
+
+    // Include source content in source maps for better debugging
+    "inlineSources": false,
+
+    // === Advanced ===
+    // Use incremental compilation for faster rebuilds
+    "incremental": true,
+
+    // Specify location for incremental compilation cache
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo"
+  },
+
+  // Default include patterns - packages can override as needed
+  "include": [
+    "src/**/*"
+  ],
+
+  // Standard exclusions for all TypeScript projects
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.e2e.ts"
+  ]
+}

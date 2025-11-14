@@ -1,16 +1,15 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@starfleet-technology/config-typescript/react.json",
   "compilerOptions": {
     "outDir": "./dist",
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
     "jsx": "react",
-    "allowSyntheticDefaultImports": true,
-    "declarationDir": "./dist/types"
+    "declarationDir": "./dist/types",
+    "declaration": true,
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "verbatimModuleSyntax": false
   },
   "include": ["src"],
   "exclude": ["node_modules"]

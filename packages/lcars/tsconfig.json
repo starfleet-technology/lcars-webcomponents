@@ -1,22 +1,7 @@
 {
+  "extends": "@starfleet-technology/config-typescript/stencil.json",
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "allowUnreachableCode": false,
-    "declaration": false,
-    "experimentalDecorators": true,
-    "lib": [
-      "dom",
-      "es2022",
-      "ESNext.Disposable"
-    ],
-    "moduleResolution": "bundler",
-    "module": "esnext",
-    "target": "es2022",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "jsx": "react",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "h.Fragment"
+    "module": "esnext"
   },
   "include": [
     "src"
