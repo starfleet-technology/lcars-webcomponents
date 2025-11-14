@@ -24,6 +24,18 @@ Explanation documentation provides context, background, and theoretical understa
 
 ## Available Explanations
 
+### System and Architecture
+- [Design Philosophy](./design-philosophy.md) - LCARS design principles and goals
+- [Architecture Overview](./architecture-overview.md) - System architecture and component relationships
+- [Web Components Choice](./web-components-choice.md) - Why web components for LCARS
+- [Stencil Benefits](./stencil-benefits.md) - Benefits of Stencil for this project
+
+### Implementation and Performance
+- [Theming System](./theming-system.md) - How theming and customization works
+- [Performance Considerations](./performance-considerations.md) - Performance design decisions
+- [Browser Compatibility](./browser-compatibility.md) - Browser support strategy
+
+### Background and Context
 - [Project Context](./context.md) - Overview of Starfleet Technology initiative
 - [Stencil Framework](./stencil/) - Deep dive into Stencil concepts and patterns
 

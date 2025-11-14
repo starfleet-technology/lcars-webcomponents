@@ -42,3 +42,10 @@ $RECYCLE.BIN/
 CONTENT_GUIDELINES.md
 CROSS_REFERENCE_SYSTEM.md
 TEMPLATE.md
+
+# TEMP
+tools/maintenance
+tools/task-management
+tools/templates
+.backups/
+.env

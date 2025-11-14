@@ -1,9 +1,12 @@
 # 🖖 LCARS Web Components
 
 [![npm (core)](https://img.shields.io/npm/v/@starfleet-technology/lcars)](https://www.npmjs.com/package/@starfleet-technology/lcars)
-[![CI](https://img.shields.io/github/actions/workflow/status/starfleet-technology/lcars-webcomponents/ci.yml?branch=main)](https://github.com/starfleet-technology/lcars-webcomponents/actions/workflows/ci.yml)
+[![CI](https://github.com/starfleet-technology/lcars-webcomponents/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/starfleet-technology/lcars-webcomponents/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![Storybook](https://img.shields.io/badge/Storybook-FF4785?style=flat&logo=storybook&logoColor=white)](https://starfleet-technology.github.io/lcars-webcomponents/)
+[![Storybook](https://img.shields.io/badge/Stencil-000?style=flat&logo=stencil&logoColor=white)](https://stenciljs.com/)
+
+
+
 
 > **Library Computer Access/Retrieval System (LCARS)** — an authentic, accessible design system built with **Stencil** & **Web Components**, with first-class **Angular/React/Vue** bindings.
 
