@@ -8,7 +8,17 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "build": "turbo run build",
-    "publish:packages": "turbo run build --filter=@starfleet-technology/lcars* && pnpm publish --access public"
+    "build:packages": "turbo run build --filter=@starfleet-technology/lcars*",
+    "release": "pnpm build:packages && changeset publish",
+    "changeset": "changeset",
+    "changeset:add": "changeset add",
+    "changeset:status": "changeset status",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
+    "clean": "turbo run clean",
+    "clean:node_modules": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+    "clean:dist": "find packages -name 'dist' -type d -prune -exec rm -rf '{}' +",
+    "clean:turbo": "find . -name '.turbo' -type d -prune -exec rm -rf '{}' +"
   },
   "keywords": [],
   "author": "Starfleet Technology (https://docs.starfleet.technology)",

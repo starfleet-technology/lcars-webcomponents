@@ -1,6 +1,6 @@
 {
   "name": "@starfleet-technology/lcars-vue",
-  "version": "0.0.3",
+  "version": "0.0.2",
   "description": "Vue bindings for Star Trek LCARS UI components - seamless integration of LCARS design system with Vue.js applications",
   "keywords": [
     "lcars",
@@ -40,7 +40,8 @@
   "devDependencies": {
     "vue": "^3.5.24",
     "@types/node": "^22.19.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@starfleet-technology/config-typescript": "workspace:*"
   },
   "repository": {
     "type": "git",
