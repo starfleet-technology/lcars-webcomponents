@@ -107,6 +107,24 @@ jobs:
             exit 1
           fi
 
+          # Validate NPM access and organization permissions
+          echo "🔍 Testing NPM authentication..."
+          npm whoami
+
+          echo "🔍 Testing organization access..."
+          if npm access list packages @starfleet-technology 2>/dev/null; then
+            echo "✅ Access to @starfleet-technology organization confirmed"
+          else
+            echo "⚠️ Cannot access @starfleet-technology organization"
+            echo "🔧 Please ensure:"
+            echo "   1. @starfleet-technology organization exists on NPM"
+            echo "   2. Your NPM token has access to this organization"
+            echo "   3. You are a member/owner of the organization"
+            echo ""
+            echo "🌐 Create organization at: https://www.npmjs.com/org/create"
+            exit 1
+          fi
+
           echo "✅ Publishing environment validated"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -178,7 +196,7 @@ jobs:
           echo "🔗 To continue with publishing, manually re-run this workflow"
           echo "   with 'force_publish' set to true, or use:"
           echo ""
-          echo "   gh workflow run version-clean.yml --field force_publish=true"
+          echo "   gh workflow run version.yml --field force_publish=true"
           echo ""
           echo "❌ Stopping workflow - manual approval required"
           echo "✅ Versions have been updated and committed"
@@ -192,8 +210,33 @@ jobs:
         if: github.event.inputs.force_publish == 'true'
         run: |
           echo "🚀 Publishing packages to NPM registry..."
-          echo "🔍 Publishing with changeset publish:"
-          pnpm changeset publish
+          echo "🔍 Current NPM user:"
+          npm whoami
+
+          echo "🔍 Publishing packages one by one to handle first-time publishing..."
+
+          # Build packages first
+          pnpm build:packages
+
+          # Publish each package individually for better error handling
+          cd packages/lcars
+          echo "📦 Publishing @starfleet-technology/lcars..."
+          npm publish --access public
+          cd ../..
+
+          cd packages/lcars-react
+          echo "📦 Publishing @starfleet-technology/lcars-react..."
+          npm publish --access public
+          cd ../..
+
+          cd packages/lcars-vue
+          echo "� Publishing @starfleet-technology/lcars-vue..."
+          npm publish --access public
+          cd ../..
+
+          # Now update changeset state
+          echo "🔄 Updating changeset state..."
+          pnpm changeset publish --skip-git
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
