@@ -1,5 +1,12 @@
 # @starfleet-technology/demo-lcars-vue
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [5ade3c7]
+  - @starfleet-technology/lcars-vue@0.0.3
+
 ## 0.0.1
 
 ### Patch Changes
