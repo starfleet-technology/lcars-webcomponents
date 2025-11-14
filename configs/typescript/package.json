@@ -33,8 +33,10 @@
     "stencil.json",
     "react.json",
     "vue.json",
+    "vue-package.json",
     "node.json",
     "stencil-base.json"
+
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0"

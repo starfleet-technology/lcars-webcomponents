@@ -11,8 +11,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "noEmit": false,
-    "noLib": false,
-    "noImplicitAny": false
+    "noLib": false
   },
   "exclude": [
     "node_modules",
