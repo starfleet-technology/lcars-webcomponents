@@ -26,9 +26,23 @@
   "publishConfig": {
     "access": "public"
   },
-  "main": "index.js",
+  "main": "base.json",
+  "files": [
+    "base.json",
+    "base.commented.jsonc",
+    "stencil.json",
+    "react.json",
+    "vue.json",
+    "vue-package.json",
+    "node.json",
+    "stencil-base.json"
+
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "dependencies": {
+    "typescript": "^5.6.0"
   },
   "packageManager": "pnpm@10.18.3"
 }

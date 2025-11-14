@@ -1,0 +1,132 @@
+# 🔄 LCARS Web Components - Continuous Integration Pipeline
+#
+# This workflow provides comprehensive quality assurance for the LCARS web components library.
+# It runs on pull requests to main/develop branches and on pushes to main (post-merge validation).
+#
+# Pipeline Features:
+# - ✅ Automated dependency installation with pnpm
+# - 🔍 ESLint code quality validation
+# - 🧪 Comprehensive unit test execution
+# - 🏗️ Multi-package build verification
+# - 📦 Package export validation and bundle analysis
+# - ⚡ Optimized caching for faster execution
+# - 🔄 Turbo monorepo build acceleration
+#
+# Quality Gates:
+# - All linting rules must pass
+# - 100% test suite must pass
+# - All packages must build successfully
+# - Package exports must be valid
+# - Bundle sizes are monitored and reported
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  # Only run on pushes to main branch (for post-merge validation)
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  # ============================================================================
+  # Continuous Integration Pipeline
+  # ============================================================================
+  # Purpose: Run comprehensive quality checks (lint, test, build, validate)
+  # This job combines all CI steps for simplicity while maintaining full validation
+  ci:
+    name: 🔄 Continuous Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent runaway jobs
+
+    permissions:
+      contents: read
+
+    steps:
+      # ----------------------------------------
+      # Environment Setup
+      # ----------------------------------------
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+
+      - name: 📦 Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ----------------------------------------
+      # Quality Gates
+      # ----------------------------------------
+      - name: 🔍 Lint Code
+        run: |
+          echo "🔍 Running ESLint code quality checks..."
+          pnpm lint
+
+      - name: 🧪 Run Tests
+        run: |
+          echo "🧪 Running comprehensive test suite..."
+          pnpm test
+
+      - name: 🏗️ Build Packages
+        run: |
+          echo "🏗️ Building all LCARS packages..."
+          pnpm build
+
+      # ----------------------------------------
+      # Package Validation
+      # ----------------------------------------
+      - name: ✅ Validate Package Exports
+        run: |
+          echo "✅ Validating package exports and structure..."
+
+          # Validate each package build
+          for pkg in lcars lcars-react lcars-vue; do
+            echo "🔍 Checking @starfleet-technology/$pkg..."
+
+            # Check dist directory exists
+            if [ ! -d "packages/$pkg/dist" ]; then
+              echo "❌ Package $pkg build failed - no dist directory"
+              exit 1
+            fi
+
+            # Check package.json exports
+            pkg_json="packages/$pkg/package.json"
+            if [ -f "$pkg_json" ]; then
+              main=$(node -p "require('./$pkg_json').main || ''")
+              types=$(node -p "require('./$pkg_json').types || ''")
+
+              if [ -n "$main" ] && [ ! -f "packages/$pkg/$main" ]; then
+                echo "❌ Main entry point missing: $main"
+                exit 1
+              fi
+
+              if [ -n "$types" ] && [ ! -f "packages/$pkg/$types" ]; then
+                echo "❌ Types entry point missing: $types"
+                exit 1
+              fi
+            fi
+
+            echo "✅ Package $pkg validation passed"
+          done
+
+      - name: 📊 Bundle Size Analysis
+        run: |
+          echo "📊 Analyzing bundle sizes..."
+          for pkg in lcars lcars-react lcars-vue; do
+            if [ -d "packages/$pkg/dist" ]; then
+              echo "📦 @starfleet-technology/$pkg:"
+              du -sh packages/$pkg/dist/* 2>/dev/null | head -5 || echo "  No dist files found"
+            fi
+          done
+          echo "✅ CI Pipeline completed successfully!"

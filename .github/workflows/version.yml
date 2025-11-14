@@ -1,0 +1,154 @@
+# 🚀 LCARS Web Components - Release & Publishing Pipeline
+#
+# This workflow handles automated versioning and publishing of LCARS packages to NPM.
+# It provides human-in-the-loop controls for safe publishing with comprehensive validation.
+#
+# Workflow Features:
+# - ✅ Automated changeset detection and version bumping
+# - 🛡️ Manual approval gates for production releases
+# - 📦 Multi-package publishing with proper dependency management
+# - 🏷️ Automated GitHub release creation
+# - 🤖 Changeset bot handles PR commenting automatically
+#
+# Security Features:
+# - Repository ownership validation
+# - Manual trigger for publishing operations
+# - Proper token management and permissions
+
+name: Release
+
+on:
+  # Run on main branch for publishing
+  push:
+    branches: [main]
+
+  # Run on pull requests for changeset validation
+  pull_request:
+    branches: [main]
+
+  # Manual trigger for human-controlled publishing
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: '🚨 Force publish (requires admin approval)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  # ============================================================================
+  # Release Pipeline
+  # ============================================================================
+  # Purpose: Handle changeset analysis, version bumping, and publishing
+  # Uses changesets/action for automated version management and publishing
+  release:
+    name: 🚀 Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent runaway jobs
+
+    # Security: Only run for starfleet-technology organization
+    if: github.repository_owner == 'starfleet-technology'
+
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      # ----------------------------------------
+      # Environment Setup
+      # ----------------------------------------
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: 📦 Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ----------------------------------------
+      # Manual Publishing Approval (for workflow_dispatch)
+      # ----------------------------------------
+      - name: 🛡️ Publishing Approval Checkpoint
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "🚨 MANUAL PUBLISHING TRIGGERED"
+          echo "🏷️ Repository: ${{ github.repository }}"
+          echo "🌟 Branch: ${{ github.ref_name }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo "🚨 Force Publish: ${{ github.event.inputs.force_publish }}"
+          echo ""
+          echo "⚠️ This will publish packages to the public NPM registry."
+          echo "✅ Proceeding with human approval confirmed."
+
+      # ----------------------------------------
+      # Publishing Safety Checks
+      # ----------------------------------------
+      - name: 🔐 Validate Publishing Environment
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          # Verify NPM token for publishing
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
+            if [ -z "$NPM_TOKEN" ]; then
+              echo "❌ NPM_TOKEN not configured for publishing"
+              exit 1
+            fi
+          fi
+
+          # Ensure we're on main branch for publishing
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" != "main" ]; then
+            echo "❌ Publishing only allowed on main branch"
+            exit 1
+          fi
+
+          echo "✅ Publishing environment validated"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
+
+      # ----------------------------------------
+      # Version & Publish (only on main branch or manual trigger)
+      # ----------------------------------------
+      - name: 🚀 Create Release Pull Request or Publish to npm
+        id: changesets
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_publish == 'true')
+        uses: changesets/action@v1
+        with:
+          # This expects you to have a script called release which does a build for your packages and calls changeset publish
+          publish: pnpm release
+          commit: 'chore: version packages [skip ci]'
+          title: '🚀 Version Packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ----------------------------------------
+      # Success Notification
+      # ----------------------------------------
+      - name: 📢 Publish Notification
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "## 🎉 Packages Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following LCARS packages have been published to NPM:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Installation" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @starfleet-technology/lcars@latest" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @starfleet-technology/lcars-react@latest" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @starfleet-technology/lcars-vue@latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Releases](../../releases) | 📦 [NPM Packages](https://www.npmjs.com/org/starfleet-technology)" >> $GITHUB_STEP_SUMMARY

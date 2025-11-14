@@ -1,12 +1,7 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@starfleet-technology/config-typescript/vue-package.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "lib": ["dom", "es2020"],
-    "module": "es2015",
-    "moduleResolution": "node",
-    "target": "es2017",
-    "skipLibCheck": true
+    "outDir": "./dist"
   },
   "include": ["src"],
   "exclude": ["node_modules"]
