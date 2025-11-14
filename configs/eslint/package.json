@@ -1,6 +1,7 @@
 {
   "name": "@starfleet-technology/config-eslint",
   "version": "1.0.0",
+  "private": true,
   "description": "Shared ESLint configuration for Starfleet Technology LCARS project - consistent code quality and style across all packages",
   "keywords": [
     "eslint",

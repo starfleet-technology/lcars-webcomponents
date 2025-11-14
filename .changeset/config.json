@@ -9,5 +9,10 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@starfleet-technology/config-eslint",
+    "@starfleet-technology/config-playwright",
+    "@starfleet-technology/config-vite",
+    "@starfleet-technology/demo-*"
+  ]
 }

@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- 5ade3c7: Add new LCARS button component with enhanced styling
+- 2a076fc: Add new LCARS button component with enhanced styling
 
   This changeset adds a new button component to the LCARS design system with improved styling and accessibility features. The component is available across all framework bindings.
 
@@ -13,7 +13,7 @@
   - ♿ Improved accessibility with ARIA labels
   - 📦 React and Vue bindings included
 
-- 5ade3c7: Fix React TypeScript definitions for better IntelliSense
+- 2a076fc: Fix React TypeScript definitions for better IntelliSense
 
   This patch improves the TypeScript definitions for React bindings, providing better autocomplete and type safety when using LCARS components in React applications.
 
@@ -21,10 +21,10 @@
   - 💡 Enhanced IntelliSense support
   - 📚 Improved TypeScript documentation
 
-- Updated dependencies [5ade3c7]
+- Updated dependencies [2a076fc]
   - @starfleet-technology/lcars@0.0.3
 
-## 0.0.3
+## 0.0.2
 
 ### Patch Changes
 

@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- 5ade3c7: Add new LCARS button component with enhanced styling
+- 2a076fc: Add new LCARS button component with enhanced styling
 
   This changeset adds a new button component to the LCARS design system with improved styling and accessibility features. The component is available across all framework bindings.
 

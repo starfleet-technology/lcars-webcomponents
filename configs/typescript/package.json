@@ -1,6 +1,6 @@
 {
   "name": "@starfleet-technology/config-typescript",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Shared TypeScript configuration for Starfleet Technology LCARS project - consistent TypeScript settings across all packages",
   "keywords": [
     "typescript",
