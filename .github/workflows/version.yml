@@ -4,11 +4,11 @@
 # It provides human-in-the-loop controls for safe publishing with comprehensive validation.
 #
 # Workflow Features:
-# - ✅ Automated changeset detection and PR commenting
+# - ✅ Automated changeset detection and version bumping
 # - 🛡️ Manual approval gates for production releases
 # - 📦 Multi-package publishing with proper dependency management
 # - 🏷️ Automated GitHub release creation
-# - 💬 Changeset bot comments on pull requests
+# - 🤖 Changeset bot handles PR commenting automatically
 #
 # Security Features:
 # - Repository ownership validation
@@ -22,7 +22,7 @@ on:
   push:
     branches: [main]
 
-  # Run on pull requests for changeset analysis and commenting
+  # Run on pull requests for changeset validation
   pull_request:
     branches: [main]
 
@@ -41,8 +41,8 @@ jobs:
   # ============================================================================
   # Release Pipeline
   # ============================================================================
-  # Purpose: Handle changeset analysis, PR commenting, and publishing
-  # This job simplifies the workflow while maintaining all necessary functionality
+  # Purpose: Handle changeset analysis, version bumping, and publishing
+  # Uses changesets/action for automated version management and publishing
   release:
     name: 🚀 Release
     runs-on: ubuntu-latest
@@ -116,61 +116,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # ----------------------------------------
-      # Changeset Analysis & PR Commenting
-      # ----------------------------------------
-      - name: 💬 Changeset Analysis & PR Comment
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "💬 Analyzing changesets for PR #${{ github.event.number }}..."
 
-          # Check if there are any changesets
-          if ls .changeset/*.md 1> /dev/null 2>&1; then
-            CHANGESET_COUNT=$(ls .changeset/*.md 2>/dev/null | grep -v README | wc -l)
-            echo "📦 Found $CHANGESET_COUNT changeset(s)"
-
-            # Create PR comment about changesets
-            gh pr comment ${{ github.event.number }} --body "## 📦 Changeset Analysis
-
-          This PR includes **$CHANGESET_COUNT changeset(s)** which will trigger version bumps and publishing when merged to main.
-
-          ### 📋 Changeset Files:
-          $(ls .changeset/*.md 2>/dev/null | grep -v README | sed 's/^/- /' | head -10)
-
-          ### 🚀 Next Steps:
-          1. ✅ Review the changeset descriptions
-          2. 🔄 Merge this PR to main to trigger version bumping
-          3. 📦 Publishing will happen automatically or can be triggered manually
-
-          ### 🔗 Preview Changes:
-          Run \`pnpm changeset status\` locally to see what packages will be affected.
-          "
-          else
-            echo "📝 No changesets found"
-
-            # Create PR comment about missing changesets
-            gh pr comment ${{ github.event.number }} --body "## ⚠️ No Changesets Found
-
-          This PR does not include any changesets. If this PR introduces changes that should trigger a release, please add a changeset:
-
-          \`\`\`bash
-          pnpm changeset
-          \`\`\`
-
-          ### 📋 When to add changesets:
-          - 🆕 New features
-          - 🐛 Bug fixes
-          - 💥 Breaking changes
-          - 📚 Public API changes
-
-          ### ℹ️ Skip changesets for:
-          - 📝 Documentation updates
-          - 🧹 Internal refactoring
-          - 🔧 Build/tooling changes
-          "
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ----------------------------------------
       # Version & Publish (only on main branch or manual trigger)

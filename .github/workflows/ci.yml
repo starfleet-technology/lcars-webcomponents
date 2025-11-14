@@ -1,7 +1,7 @@
 # 🔄 LCARS Web Components - Continuous Integration Pipeline
 #
 # This workflow provides comprehensive quality assurance for the LCARS web components library.
-# It runs on every push and pull request to ensure code quality, functionality, and build integrity.
+# It runs on pull requests to main/develop branches and on pushes to main (post-merge validation).
 #
 # Pipeline Features:
 # - ✅ Automated dependency installation with pnpm
@@ -22,9 +22,10 @@
 name: CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
+    branches: [main, develop]
+  # Only run on pushes to main branch (for post-merge validation)
+  push:
     branches: [main]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
