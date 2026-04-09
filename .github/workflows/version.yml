@@ -67,9 +67,28 @@ jobs:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v4
         with:
-          # Use the SHA that triggered CI; falls back to HEAD on workflow_dispatch
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          # Check out the branch so later git commit/push steps are not in detached HEAD.
+          # For workflow_run use the branch that passed CI; for manual runs use the current ref.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
           fetch-depth: 0
+
+      - name: ✅ Validate commit matches successful CI run
+        if: github.event_name == 'workflow_run'
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          EXPECTED_SHA="${{ github.event.workflow_run.head_sha }}"
+
+          echo "Checked out SHA:  ${ACTUAL_SHA}"
+          echo "Expected SHA:     ${EXPECTED_SHA}"
+
+          if [ "${ACTUAL_SHA}" != "${EXPECTED_SHA}" ]; then
+            echo "❌ Branch tip no longer matches the commit that passed CI."
+            echo "A new commit may have landed on main between CI completing and this job starting."
+            echo "Refusing to continue — re-run once the new commit has its own CI result."
+            exit 1
+          fi
+
+          echo "✅ Commit SHA validated"
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
@@ -166,6 +185,19 @@ jobs:
             git commit -m "chore: version packages [skip ci]"
             git push
           fi
+
+      # ----------------------------------------
+      # Sync version bump back to develop
+      # ----------------------------------------
+      - name: 🔄 Sync main back into develop
+        if: steps.version_update.outputs.version_updated == 'true' && github.event_name == 'workflow_run'
+        run: |
+          echo "🔄 Merging version bump commit back into develop..."
+          git fetch origin
+          git checkout develop
+          git merge --ff-only origin/main || git merge -X ours origin/main
+          git push origin develop
+          echo "✅ develop is now in sync with main"
 
       # ----------------------------------------
       # Manual Publishing Gate
