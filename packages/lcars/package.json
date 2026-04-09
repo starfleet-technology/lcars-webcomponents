@@ -1,6 +1,6 @@
 {
   "name": "@starfleet-technology/lcars",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Star Trek LCARS (Library Computer Access/Retrieval System) UI components built with Stencil for universal web framework compatibility",
   "keywords": [
     "lcars",
