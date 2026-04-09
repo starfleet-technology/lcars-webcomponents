@@ -42,10 +42,6 @@
       "import": "./dist/*",
       "types": "./dist/*"
     },
-    "./my-component": {
-      "import": "./dist/components/my-component.js",
-      "types": "./dist/components/my-component.d.ts"
-    },
     "./lcars-button": {
       "import": "./dist/components/lcars-button.js",
       "types": "./dist/components/lcars-button.d.ts"

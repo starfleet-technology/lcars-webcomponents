@@ -12,10 +12,3 @@ export const LcarsButton: StencilVueComponent<JSX.LcarsButton> = /*@__PURE__*/ d
   'color'
 ]);
 
-
-export const MyComponent: StencilVueComponent<JSX.MyComponent> = /*@__PURE__*/ defineContainer<JSX.MyComponent>('my-component', undefined, [
-  'first',
-  'middle',
-  'last'
-]);
-
