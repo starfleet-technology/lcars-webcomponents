@@ -195,7 +195,7 @@ jobs:
           echo "🔄 Merging version bump commit back into develop..."
           git fetch origin
           git checkout develop
-          git merge --ff-only origin/main || git merge -X ours origin/main
+          git merge --ff-only origin/main || git merge --no-ff --no-edit origin/main
           git push origin develop
           echo "✅ develop is now in sync with main"
 
