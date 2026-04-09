@@ -13,20 +13,6 @@ export namespace Components {
          */
         "color": string;
     }
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first": string;
-        /**
-          * The last name
-         */
-        "last": string;
-        /**
-          * The middle name
-         */
-        "middle": string;
-    }
 }
 declare global {
     interface HTMLLcarsButtonElement extends Components.LcarsButton, HTMLStencilElement {
@@ -35,15 +21,8 @@ declare global {
         prototype: HTMLLcarsButtonElement;
         new (): HTMLLcarsButtonElement;
     };
-    interface HTMLMyComponentElement extends Components.MyComponent, HTMLStencilElement {
-    }
-    var HTMLMyComponentElement: {
-        prototype: HTMLMyComponentElement;
-        new (): HTMLMyComponentElement;
-    };
     interface HTMLElementTagNameMap {
         "lcars-button": HTMLLcarsButtonElement;
-        "my-component": HTMLMyComponentElement;
     }
 }
 declare namespace LocalJSX {
@@ -54,23 +33,8 @@ declare namespace LocalJSX {
          */
         "color"?: string;
     }
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first"?: string;
-        /**
-          * The last name
-         */
-        "last"?: string;
-        /**
-          * The middle name
-         */
-        "middle"?: string;
-    }
     interface IntrinsicElements {
         "lcars-button": LcarsButton;
-        "my-component": MyComponent;
     }
 }
 export { LocalJSX as JSX };
@@ -78,7 +42,6 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "lcars-button": LocalJSX.LcarsButton & JSXBase.HTMLAttributes<HTMLLcarsButtonElement>;
-            "my-component": LocalJSX.MyComponent & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
         }
     }
 }

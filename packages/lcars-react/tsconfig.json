@@ -2,11 +2,12 @@
   "extends": "@starfleet-technology/config-typescript/react.json",
   "compilerOptions": {
     "outDir": "./dist",
+    "rootDir": "./src",
     "declarationDir": "./dist/types",
     "declaration": true,
     "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": false
+      "rewriteRelativeImportExtensions": true
+
   },
   "include": ["src"],
   "exclude": ["node_modules"]

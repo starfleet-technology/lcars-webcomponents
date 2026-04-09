@@ -8,7 +8,6 @@
 /* eslint-disable */
 
 import { LcarsButton as LcarsButtonElement, defineCustomElement as defineLcarsButton } from "@starfleet-technology/lcars/dist/components/lcars-button.js";
-import { MyComponent as MyComponentElement, defineCustomElement as defineMyComponent } from "@starfleet-technology/lcars/dist/components/my-component.js";
 import type { StencilReactComponent } from '@stencil/react-output-target/runtime';
 import { createComponent } from '@stencil/react-output-target/runtime';
 import React from 'react';
@@ -22,15 +21,4 @@ export const LcarsButton: StencilReactComponent<LcarsButtonElement, LcarsButtonE
     react: React,
     events: {} as LcarsButtonEvents,
     defineCustomElement: defineLcarsButton
-});
-
-export type MyComponentEvents = NonNullable<unknown>;
-
-export const MyComponent: StencilReactComponent<MyComponentElement, MyComponentEvents> = /*@__PURE__*/ createComponent<MyComponentElement, MyComponentEvents>({
-    tagName: 'my-component',
-    elementClass: MyComponentElement,
-    // @ts-ignore - ignore potential React type mismatches between the Stencil Output Target and your project.
-    react: React,
-    events: {} as MyComponentEvents,
-    defineCustomElement: defineMyComponent
 });

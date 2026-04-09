@@ -12,6 +12,7 @@
     "starfleet-technology",
     "ui-components"
   ],
+  "type": "module",
   "author": "Starfleet Technology <engineering@starfleet.technology> (https://docs.starfleet.technology)",
   "license": "CC BY-NC-SA 4.0",
   "homepage": "https://docs.starfleet.technology",
@@ -23,11 +24,18 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p . --outDir ./dist"
+    "build": "tsc -p . --outDir ./dist",
+    "dev": "tsc -p . --outDir ./dist --watch"
   },
   "publishConfig": {
     "access": "public"

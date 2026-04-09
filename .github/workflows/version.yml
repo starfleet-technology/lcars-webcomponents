@@ -18,9 +18,11 @@
 name: Release
 
 on:
-  # Run on main branch for version updates
-  push:
+  # Trigger only after CI passes on main — a failing CI blocks release
+  workflow_run:
+    workflows: ["CI"]
     branches: [main]
+    types: [completed]
 
   # Manual trigger for publishing after approval
   workflow_dispatch:
@@ -31,7 +33,9 @@ on:
         default: false
         type: boolean
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   # ============================================================================
@@ -44,8 +48,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30  # Prevent runaway jobs
 
-    # Security: Only run for starfleet-technology organization
-    if: github.repository_owner == 'starfleet-technology'
+    # Only run for starfleet-technology org, and only when CI passed (or explicit manual dispatch)
+    if: |
+      github.repository_owner == 'starfleet-technology' &&
+      (
+        (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+        github.event_name == 'workflow_dispatch'
+      )
 
     permissions:
       contents: write
@@ -58,7 +67,28 @@ jobs:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v4
         with:
+          # Check out the branch so later git commit/push steps are not in detached HEAD.
+          # For workflow_run use the branch that passed CI; for manual runs use the current ref.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
           fetch-depth: 0
+
+      - name: ✅ Validate commit matches successful CI run
+        if: github.event_name == 'workflow_run'
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          EXPECTED_SHA="${{ github.event.workflow_run.head_sha }}"
+
+          echo "Checked out SHA:  ${ACTUAL_SHA}"
+          echo "Expected SHA:     ${EXPECTED_SHA}"
+
+          if [ "${ACTUAL_SHA}" != "${EXPECTED_SHA}" ]; then
+            echo "❌ Branch tip no longer matches the commit that passed CI."
+            echo "A new commit may have landed on main between CI completing and this job starting."
+            echo "Refusing to continue — re-run once the new commit has its own CI result."
+            exit 1
+          fi
+
+          echo "✅ Commit SHA validated"
 
       - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
@@ -67,6 +97,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: 📦 Install Dependencies
@@ -91,19 +122,16 @@ jobs:
       # Publishing Safety Checks
       # ----------------------------------------
       - name: 🔐 Validate Publishing Environment
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          # Verify NPM token for publishing
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event.inputs.force_publish }}" = "true" ]; then
-            if [ -z "$NPM_TOKEN" ]; then
-              echo "❌ NPM_TOKEN not configured for publishing"
-              exit 1
-            fi
+          # Verify NPM token is available
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "❌ NPM_TOKEN not configured for publishing"
+            exit 1
           fi
 
-          # Ensure we're on main branch for publishing
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" != "main" ]; then
-            echo "❌ Publishing only allowed on main branch"
+          # For manual dispatch: ensure we're on the main branch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" != "main" ]; then
+            echo "❌ Publishing only allowed from main branch"
             exit 1
           fi
 
@@ -135,7 +163,7 @@ jobs:
       # ----------------------------------------
       - name: 📊 Apply Version Updates
         id: version_update
-        if: steps.changeset_check.outputs.has_changesets == 'true' && github.event_name == 'push'
+        if: steps.changeset_check.outputs.has_changesets == 'true' && github.event_name == 'workflow_run'
         run: |
           echo "🔄 Applying version updates from changesets..."
 
@@ -159,10 +187,23 @@ jobs:
           fi
 
       # ----------------------------------------
+      # Sync version bump back to develop
+      # ----------------------------------------
+      - name: 🔄 Sync main back into develop
+        if: steps.version_update.outputs.version_updated == 'true' && github.event_name == 'workflow_run'
+        run: |
+          echo "🔄 Merging version bump commit back into develop..."
+          git fetch origin
+          git checkout develop
+          git merge --ff-only origin/main || git merge --no-ff --no-edit origin/main
+          git push origin develop
+          echo "✅ develop is now in sync with main"
+
+      # ----------------------------------------
       # Manual Publishing Gate
       # ----------------------------------------
       - name: 🛡️ Manual Publishing Gate
-        if: steps.version_update.outputs.version_updated == 'true' && github.event_name == 'push'
+        if: steps.version_update.outputs.version_updated == 'true' && github.event_name == 'workflow_run'
         run: |
           echo "🚨 PUBLISHING APPROVAL REQUIRED"
           echo "================================"
@@ -178,7 +219,7 @@ jobs:
           echo "🔗 To continue with publishing, manually re-run this workflow"
           echo "   with 'force_publish' set to true, or use:"
           echo ""
-          echo "   gh workflow run version-clean.yml --field force_publish=true"
+          echo "   gh workflow run version.yml --field force_publish=true"
           echo ""
           echo "❌ Stopping workflow - manual approval required"
           echo "✅ Versions have been updated and committed"
@@ -188,14 +229,17 @@ jobs:
       # ----------------------------------------
       # NPM Publishing (only with manual approval)
       # ----------------------------------------
+      - name: 🏗️ Build Packages
+        if: github.event.inputs.force_publish == 'true'
+        run: pnpm build:packages
+
       - name: 🚀 Publish to NPM
         if: github.event.inputs.force_publish == 'true'
         run: |
           echo "🚀 Publishing packages to NPM registry..."
-          echo "🔍 Publishing with changeset publish:"
           pnpm changeset publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # ----------------------------------------
       # Success Notification

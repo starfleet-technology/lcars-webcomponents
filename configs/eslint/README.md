@@ -1,54 +1,17 @@
-# ESLint Configuration
+# @starfleet-technology/config-eslint
 
-[![npm version](https://img.shields.io/npm/v/@starfleet-technology/config-eslint?style=flat-square&label=npm&color=orange)](https://www.npmjs.com/package/@starfleet-technology/config-eslint)
-[![license](https://img.shields.io/npm/l/@starfleet-technology/config-eslint?style=flat-square&label=license&color=green)](../../LICENSE)
+[![license](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey?style=flat-square)](https://github.com/starfleet-technology/lcars-webcomponents/blob/main/LICENSE)
 
-> Shared ESLint configuration for Starfleet Technology LCARS project - consistent code quality and style across all packages
+> Shared ESLint flat-config for the LCARS monorepo.
 
-## Installation
+## 🎯 Usage
 
-```bash
-# npm
-npm install --save-dev @starfleet-technology/config-eslint
-
-# yarn  
-yarn add --dev @starfleet-technology/config-eslint
-
-# pnpm
-pnpm add -D @starfleet-technology/config-eslint
-```
-
-## Usage
-
-Add to your `eslint.config.js`:
-
-```javascript
+```js
+// eslint.config.js
 import eslintConfig from '@starfleet-technology/config-eslint';
 
 export default eslintConfig;
 ```
-
-## Features
-
-- **TypeScript support** - Full TypeScript linting rules
-- **React support** - React-specific linting for JSX/TSX
-- **Stencil support** - Web Components and Stencil patterns
-- **Import sorting** - Consistent import organization
-- **Code quality** - Best practices enforcement
-- **LCARS standards** - Project-specific conventions
-
-## Rules Included
-
-- ESLint recommended rules
-- TypeScript ESLint recommended rules  
-- React hooks rules
-- Import/export rules
-- Accessibility rules
-- Custom LCARS project rules
-
-## License
-
-MIT License - see the [LICENSE](../../LICENSE) file for details.
 
 ---
 
