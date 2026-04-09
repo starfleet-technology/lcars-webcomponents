@@ -1,6 +1,6 @@
 {
   "name": "@starfleet-technology/lcars-vue",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Vue bindings for Star Trek LCARS UI components - seamless integration of LCARS design system with Vue.js applications",
   "keywords": [
     "lcars",
